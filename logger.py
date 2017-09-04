@@ -5,19 +5,37 @@
 import logging
 
 
-def init_logger(filename, level, name):
-    # create a logging object
-    logger = logging.getLogger()
-    logger.setLevel(level)
-    # format log file
-    formatter = logging.Formatter('%(asctime)s %(levelname)s-%(filename)s: %(message)s')
-    # create the logging file handler and format the log file
-    fh = logging.FileHandler(filename, mode='a+')
-    fh.setFormatter(formatter)
-    # create logging print Stream
-    ch = logging.StreamHandler()
-    ch.setFormatter(formatter)
-    # logger object load the hander
-    logger.addHandler(fh)
-    logger.addHandler(ch)
-    return logger
+class Log:
+    def __init__(self, filename, level, name):
+        # create a logging object
+        self.logger = logging.getLogger()
+        self.logger.setLevel(level)
+        # format log file
+        self.formatter = logging.Formatter('%(asctime)s %(levelname)s-%(filename)s: %(message)s')
+        # create the logging file handler and format the log file
+        self.fh = logging.FileHandler(filename, mode='a+')
+        self.fh.setFormatter(self.formatter)
+        # create logging print Stream
+        self.ch = logging.StreamHandler()
+        self.ch.setFormatter(self.formatter)
+        # logger object load the handler
+        self.logger.addHandler(self.fh)
+        self.logger.addHandler(self.ch)
+
+    def info(self, msg):
+        self.logger.info(msg)
+
+    def warning(self, msg):
+        self.logger.warning(msg)
+
+    def error(self, msg):
+        self.logger.error(msg)
+
+    def debug(self, msg):
+        self.logger.debug(msg)
+
+    def critical(self, msg):
+        self.logger.critical(msg)
+
+    def close(self):
+        self.logger.removeHandler(self.fh)
