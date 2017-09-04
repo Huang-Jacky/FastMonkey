@@ -8,7 +8,7 @@ import logging
 class Log:
     def __init__(self, filename, level, name):
         # create a logging object
-        self.logger = logging.getLogger()
+        self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
         # format log file
         self.formatter = logging.Formatter('%(asctime)s %(levelname)s-%(filename)s: %(message)s')
