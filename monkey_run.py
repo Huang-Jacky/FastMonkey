@@ -7,6 +7,9 @@ import time
 import commands
 from Androice import check_devices
 import thread
+import logger
+
+logger = logger.init_logger('./my_log.log', 'DEBUG', 'test')
 
 
 class MyFrame(wx.Frame):
@@ -148,7 +151,7 @@ class MyFrame(wx.Frame):
         value = self.delayNumCtrl.GetValue().strip()
         if self.input_check(value):
             if value != '':
-                print 'Delay_num = ' + value
+                logger.info('Delay_num = ' + value)
                 self.delayNumCtrl.SetValue(value)
         else:
             self.delayNumCtrl.SetValue(self.delayDefault)
@@ -202,10 +205,10 @@ class MyFrame(wx.Frame):
                     self.checkListBox.Append(self.default_package)
         elif len(result) == 1:
             if 'Permission' in result[0]:
-                print 'Need ROOT Permission to access!'
+                logger.warn('Need ROOT Permission to access!')
                 self.checkListBox.Append(self.default_package)
             else:
-                print result[0]
+                logger.info(result[0])
                 self.checkListBox.Append(result[0].strip())
 
     def reset(self):
@@ -228,9 +231,9 @@ class MyFrame(wx.Frame):
             package_list = list_string.GetCheckedStrings()
         else:
             package_list = self.default_package
-        print "select package count:" + str(len(package_list))
+        logger.info("select package count:" + str(len(package_list)))
         for i in range(0, len(package_list)):
-            print package_list
+            logger.info(package_list)
             package = package_list[i]
             pack = package.strip('\r\n')
             package_section += (" -p " + pack)
@@ -279,7 +282,7 @@ class MyFrame(wx.Frame):
         log_name = "MonkeyLog_" + date
         os.mkdir(log_name)
         self.log_dir = os.path.join(log_home, log_name)
-        print self.log_dir
+        logger.info(self.log_dir)
         os.chdir(self.log_dir)
 
         # run monkey and record monkey log ################
@@ -287,9 +290,9 @@ class MyFrame(wx.Frame):
         monkey_cmd = monkey_cmd + delay_section + seed_section + package_section + hard_key_section\
                      + system_key_section + activity_p_section + log_section + execute_mode_section
         monkey_cmd = monkey_cmd + " " + execute_num + " > monkey.log"
-        print monkey_cmd
+        logger.info(monkey_cmd)
         commands.getstatusoutput(monkey_cmd)
-        print '#' * 15 + ' Monkey finish '+'#' * 15
+        logger.info('#' * 15 + ' Monkey finish '+'#' * 15)
         os.chdir(self.root_dir)
         self.quickButton.Enable()
         self.doButton.Enable()
@@ -305,7 +308,7 @@ class MyFrame(wx.Frame):
                         grep_cmd = "grep -Eni -B30 -A30 'FATAL|error|exception|system.err|androidruntime' " + log_f + \
                                    " > " + log_f.split('.')[0] + str(time.time()) + "_fatal.log"
                         os.system(grep_cmd)
-        print '#' * 15 + ' Log build finish ' + '#' * 15
+        logger.info('#' * 15 + ' Log build finish ' + '#' * 15)
 
     def save_logcat(self, event):
         os.chdir(self.log_dir)
@@ -317,10 +320,10 @@ class MyFrame(wx.Frame):
             if self.logcat_p != "":
                 for i in self.logcat_p.strip().split('\r'):
                     pid = i.split(' ')[5]
-                    print 'Logcat pid = ' + pid
+                    logger.info('Logcat pid = ' + pid)
                     commands.getoutput('adb shell kill %s' % pid)
             else:
-                print 'No logcat process running!'
+                logger.info('No logcat process running!')
 
     @staticmethod
     def clear_logcat():
@@ -341,10 +344,10 @@ class MyFrame(wx.Frame):
             self.monkey_p = commands.getoutput('adb shell ps | grep monkey')
             if self.monkey_p != "":
                 pid = self.monkey_p.split(' ')[5]
-                print 'Monkey pid = ' + pid
+                logger.info('Monkey pid = ' + pid)
                 return True, pid
             else:
-                print 'No monkey process running!'
+                logger.info('No monkey process running!')
                 return False
 
     def stop_monkey(self, event):
