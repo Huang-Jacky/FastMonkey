@@ -12,7 +12,7 @@ import logger
 log = logger.Log('./my_log.log', 'INFO', 'MonkeyTest')
 
 
-class MyFrame(wx.Frame):
+class MainFrame(wx.Frame):
     delayDefault = "2"
     seedDefault = "5000000"
     executeNumDefault = "60000000"
@@ -363,6 +363,6 @@ class MyFrame(wx.Frame):
 
 if __name__ == '__main__':
     app = wx.App()
-    frame = MyFrame()
+    frame = MainFrame()
     frame.Show(True)
     app.MainLoop()
