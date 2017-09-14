@@ -3,8 +3,10 @@
 
 import commands
 import logger
+import os
 
 log = logger.Log('./my_log.log', 'INFO', 'Androice')
+screen_shot_path = os.path.join(os.getcwd(), 'screenshot')
 
 
 def check_devices():
@@ -37,3 +39,21 @@ def get_ctime(*timestamp):
     else:
         t = time.strftime("%Y-%m-%d %H:%M:%S ", time.localtime())
     return t
+
+
+def take_screen_shot(file_name, save_path=screen_shot_path):
+    if check_devices():
+        cmd = commands.getstatusoutput('adb shell /system/bin/screencap -p /sdcard/%s.png' % file_name)
+        if cmd[0] == 0:
+            if not os.path.exists(save_path):
+                os.mkdir(save_path)
+            commands.getstatusoutput('adb pull /sdcard/%s.png %s' % (file_name, save_path))
+            if os.path.exists(save_path + '/' + file_name + '.png'):
+                log.info('Take screen shot done! Saved at %s.png' % (save_path + '/' + file_name))
+            else:
+                log.warn('Save screen shot failed!')
+        else:
+            log.warn('Take screen shot failed!')
+
+
+take_screen_shot('test')
