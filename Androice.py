@@ -55,5 +55,3 @@ def take_screen_shot(file_name, save_path=screen_shot_path):
         else:
             log.warn('Take screen shot failed!')
 
-
-take_screen_shot('test')
