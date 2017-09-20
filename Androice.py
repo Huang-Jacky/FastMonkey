@@ -6,7 +6,7 @@ import logger
 import os
 import time
 
-log = logger.Log('./my_log.log', 'INFO', 'Androice')
+log = logger.Log('./my_log.log', 'INFO', os.path.split(__file__)[1])
 screen_shot_path = os.path.join(os.getcwd(), 'screenshot')
 
 

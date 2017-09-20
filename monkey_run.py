@@ -9,7 +9,7 @@ from Androice import check_devices
 import thread
 import logger
 
-log = logger.Log('./my_log.log', 'INFO', 'MonkeyTest')
+log = logger.Log('./my_log.log', 'INFO', os.path.split(__file__)[1])
 
 
 class MainFrame(wx.Frame):
@@ -44,20 +44,17 @@ class MainFrame(wx.Frame):
         execution_mode_default = execute_mode[0]
 
         menu_bar = wx.MenuBar()
-        menu1 = wx.Menu()
-        item1_save_log = wx.MenuItem(menu1, 1, '&SaveLog')
-        item1_quit = wx.MenuItem(menu1, 2, '&Quit')
-        item1_stop_and_analysis = wx.MenuItem(menu1, 3, '&StopLog')
-        menu1.Append(item1_save_log)
-        menu1.Append(item1_stop_and_analysis)
-        menu1.Append(item1_quit)
-        menu2 = wx.Menu()
-        menu_bar.Append(menu1, "&File")
-        menu_bar.Append(menu2, '&Help')
+        m_file = wx.Menu()
+        m_file.Append(wx.MenuItem(m_file, 1, '&SaveLog'))
+        m_file.Append(wx.MenuItem(m_file, 2, '&StopLog'))
+        m_file.Append(wx.MenuItem(m_file, 3, '&Quit'))
+        m_help = wx.Menu()
+        menu_bar.Append(m_file, "&File")
+        menu_bar.Append(m_help, '&Help')
         self.SetMenuBar(menu_bar)
         self.Bind(wx.EVT_MENU, self.save_logcat, id=1)
-        self.Bind(wx.EVT_MENU, self.on_quit, id=2)
-        self.Bind(wx.EVT_MENU, self.build_fatal_log, id=3)
+        self.Bind(wx.EVT_MENU, self.build_fatal_log, id=2)
+        self.Bind(wx.EVT_MENU, self.on_quit, id=3)
 
         wx.StaticText(panel, -1, "种子数:", pos=(x_pos, y_pos))
         self.seedCtrl = wx.TextCtrl(panel, -1, "", pos=(x_pos1, y_pos))
@@ -172,10 +169,16 @@ class MainFrame(wx.Frame):
         thread.start_new_thread(task, ())
 
     def start_monkey(self, event):
-        self.start_new_thread(self.quick_monkey)
+        if check_devices():
+            self.start_new_thread(self.quick_monkey)
+        else:
+            log.warn('Please check the device connection!')
 
     def begin_monkey(self, event):
-        self.start_new_thread(self.normal_monkey)
+        if check_devices():
+            self.start_new_thread(self.normal_monkey)
+        else:
+            log.warn('Please check the device connection!')
 
     def on_select_all(self, event):
         list_string = self.checkListBox
@@ -224,18 +227,16 @@ class MainFrame(wx.Frame):
         delay_num = self.delayNumCtrl.GetValue()
         # execute_mode = self.executeModeCtrl.GetValue()
         date = time.strftime('%Y%m%d%H%m%s', time.localtime(time.time()))
-        list_string = self.checkListBox
-
         package_section = ""
-        if list_string.CheckedStrings == 0:
-            package_list = list_string.GetCheckedStrings()
+
+        if self.checkListBox.GetCheckedStrings():
+            package_list = self.checkListBox.GetCheckedStrings()
         else:
             package_list = self.default_package
-        log.info("select package count:" + str(len(package_list)))
-        for i in range(0, len(package_list)):
-            log.info(package_list)
-            package = package_list[i]
-            pack = package.strip('\r\n')
+        log.info("Selected package count: %d" % len(package_list))
+        for item in package_list:
+            pack = item.strip('\r\n')
+            log.info('         Package: %s' % pack)
             package_section += (" -p " + pack)
 
         seed_section = " -s " + seed

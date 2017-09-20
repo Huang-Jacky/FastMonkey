@@ -11,7 +11,7 @@ class Log:
         self.logger = logging.getLogger(name)
         self.logger.setLevel(level)
         # format log file
-        self.formatter = logging.Formatter('%(asctime)s %(levelname)s-%(filename)s: %(message)s')
+        self.formatter = logging.Formatter('%(asctime)s %(name)s-%(levelname)s: %(message)s')
         # create the logging file handler and format the log file
         self.fh = logging.FileHandler(filename, mode='a+')
         self.fh.setFormatter(self.formatter)
