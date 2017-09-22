@@ -42,7 +42,7 @@ def get_ctime(*timestamp):
     return t
 
 
-def take_screen_shot(file_name=str(time.time()), save_path=screen_shot_path):
+def take_screen_shot(file_name='Capture_'+str(time.time()), save_path=screen_shot_path):
     if check_devices():
         cmd = commands.getstatusoutput('adb shell /system/bin/screencap -p /sdcard/%s.png' % file_name)
         if cmd[0] == 0:
@@ -56,3 +56,8 @@ def take_screen_shot(file_name=str(time.time()), save_path=screen_shot_path):
                 log.warn('Save screen shot failed!')
         else:
             log.warn('Take screen shot failed!')
+        raise MyException(save_path + '/' + file_name + '.png')
+
+
+class MyException(StandardError):
+    pass

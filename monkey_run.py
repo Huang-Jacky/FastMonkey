@@ -5,9 +5,10 @@ import wx
 import os
 import time
 import commands
-from Androice import check_devices
+from Androice import check_devices, take_screen_shot, MyException
 import thread
 import logger
+from PIL import Image
 
 log = logger.Log('./my_log.log', 'INFO', os.path.split(__file__)[1])
 
@@ -25,7 +26,7 @@ class MainFrame(wx.Frame):
     def __init__(self):
 
         wx.Frame.__init__(self, None, -1, "FastMonkey", pos=(480, 25), size=(420, 700),
-                          style=wx.DEFAULT_FRAME_STYLE)
+                          style=wx.MINIMIZE_BOX | wx.CLOSE_BOX, name='frame_main')
         panel = wx.Panel(self, -1)
 
         x_pos = 10
@@ -59,7 +60,7 @@ class MainFrame(wx.Frame):
         wx.StaticText(panel, -1, "种子数:", pos=(x_pos, y_pos))
         self.seedCtrl = wx.TextCtrl(panel, -1, "", pos=(x_pos1, y_pos))
         self.seedCtrl.Bind(wx.EVT_KILL_FOCUS, self.valid_seed)
-        # self.seedCtrl.SetFocus()
+        self.seedCtrl.SetFocus()
 
         wx.StaticText(panel, -1, "执行次数:", pos=(x_pos, y_pos + y_delta))
         self.executeNumCtrl = wx.TextCtrl(panel, -1, "", pos=(x_pos1, y_pos + y_delta))
@@ -82,28 +83,26 @@ class MainFrame(wx.Frame):
 
         self.readButton = wx.Button(panel, -1, "读取程序包", pos=(x_pos, y_pos_layout))
         self.Bind(wx.EVT_BUTTON, self.get_package_list, self.readButton)
-        self.readButton.SetDefault()
 
         self.selectButton = wx.Button(panel, -1, "全部选择", pos=(x_pos + 120, y_pos_layout))
         self.Bind(wx.EVT_BUTTON, self.on_select_all, self.selectButton)
-        self.selectButton.SetDefault()
 
         self.unSelectButton = wx.Button(panel, -1, "全部取消", pos=(x_pos + 120 * 2, y_pos_layout))
         self.Bind(wx.EVT_BUTTON, self.on_unselect, self.unSelectButton)
 
         self.defaultButton = wx.Button(panel, -1, "默认参数", pos=(x_pos, y_pos_layout + y_delta))
         self.Bind(wx.EVT_BUTTON, self.on_reset, self.defaultButton)
-        self.defaultButton.SetDefault()
 
         self.quickButton = wx.Button(panel, -1, "一键Monkey", pos=(x_pos + 120, y_pos_layout + y_delta))
         self.Bind(wx.EVT_BUTTON, self.start_monkey, self.quickButton)
-        self.quickButton.SetDefault()
 
         self.doButton = wx.Button(panel, -1, "开始Monkey", pos=(x_pos + 120 * 2, y_pos_layout + y_delta))
         self.Bind(wx.EVT_BUTTON, self.begin_monkey, self.doButton)
-        self.doButton.SetDefault()
 
-        self.stopButton = wx.Button(panel, -1, "停止Monkey", pos=(x_pos, y_pos_layout + 2 * y_delta))
+        self.captureButton = wx.Button(panel, -1, "截图", pos=(x_pos, y_pos_layout + 2 * y_delta))
+        self.Bind(wx.EVT_BUTTON, self.capture_screen, self.captureButton)
+
+        self.stopButton = wx.Button(panel, -1, "停止Monkey", pos=(x_pos + 120, y_pos_layout + 2 * y_delta))
         self.Bind(wx.EVT_BUTTON, self.stop_monkey, self.stopButton)
         self.stopButton.SetDefault()
 
@@ -360,6 +359,20 @@ class MainFrame(wx.Frame):
         self.quickButton.Enable()
         self.doButton.Enable()
         os.chdir(self.root_dir)
+
+    def capture_task(self):
+        try:
+            self.start_new_thread(take_screen_shot('Capture_'+str(time.time())))
+        except MyException, e:
+            img_path = e.message
+            if img_path:
+                img = Image.open(img_path)
+                img.show()
+        else:
+            pass
+
+    def capture_screen(self, event):
+        self.start_new_thread(self.capture_task)
 
 
 if __name__ == '__main__':
