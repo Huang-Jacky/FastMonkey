@@ -24,13 +24,12 @@ class MainFrame(wx.Frame):
     logcat_p = ""
 
     def __init__(self):
-
-        wx.Frame.__init__(self, None, -1, "FastMonkey", pos=(480, 25), size=(420, 700),
+        wx.Frame.__init__(self, None, -1, "FastMonkey", pos=(480, 25), size=(420, 750),
                           style=wx.MINIMIZE_BOX | wx.CLOSE_BOX, name='frame_main')
         panel = wx.Panel(self, -1)
 
         x_pos = 10
-        x_pos1 = 180
+        x_pos1 = 120
         y_pos = 12
         y_delta = 40
         execute_mode = ["默认",
@@ -74,9 +73,17 @@ class MainFrame(wx.Frame):
         self.executeModeCtrl = wx.ComboBox(panel, -1, "", (x_pos1, y_pos + 3 * y_delta), choices=execute_mode,
                                            style=wx.CB_READONLY)
 
-        self.checkListBox = wx.CheckListBox(panel, -1, (x_pos, y_pos + 4 * y_delta), (400, 350), [])
+        wx.StaticText(panel, -1, "选择设备:", pos=(x_pos, y_pos + 4 * y_delta))
+        list_box = self.get_devices()
+        list_box.append('Necux 5x - ahdhjhi3badbk')
+        list_size = list_box.__len__()
+        self.listBox = wx.ListBox(panel, -1, (x_pos1, y_pos + 4 * y_delta), (230, 21 * list_size), list_box, wx.LB_SINGLE)
+        if list_size > 0:
+            self.listBox.SetSelection(0)
 
-        y_pos_layout = y_pos + 14 * y_delta
+        self.checkListBox = wx.CheckListBox(panel, -1, (x_pos, y_pos + 5.2 * y_delta), (400, 350), [])
+
+        y_pos_layout = y_pos + 15 * y_delta
         wx.StaticText(panel, -1, "日志输出等级:", pos=(x_pos, y_pos_layout - y_delta))
         self.logModeCtrl = wx.ComboBox(panel, -1, "", (x_pos1, y_pos_layout - y_delta), choices=log_mode,
                                        style=wx.CB_READONLY)
@@ -109,6 +116,23 @@ class MainFrame(wx.Frame):
     def on_quit(self, e):
         self.stop_monkey(e)
         self.Close()
+
+    @staticmethod
+    def get_devices():
+        devices_list = []
+        if check_devices():
+            d_list = commands.getstatusoutput('adb devices')
+            result = d_list[1].split('\n')[1:]
+            for info in result:
+                phone_name = info.split('\t')[0]
+                if phone_name != "":
+                    cmd = 'adb -s %s -d shell getprop ro.product.model' % phone_name
+                    device_type = commands.getoutput(cmd).strip()
+                    devices_list.append(' - '.join([device_type, phone_name]))
+        return devices_list
+
+    def current_device(self):
+        return self.listBox.GetStringSelection().split(' - ')[1]
 
     @staticmethod
     def input_check(value):
@@ -195,7 +219,7 @@ class MainFrame(wx.Frame):
 
     def get_package_list(self, event):
         self.checkListBox.Clear()
-        cmd = "adb shell ls data/data"
+        cmd = "adb -s %s shell ls data/data" % self.current_device()
         result = commands.getoutput(cmd).split('\r')
         while '' in result:
             result.remove('')
@@ -237,6 +261,8 @@ class MainFrame(wx.Frame):
             pack = item.strip('\r\n')
             log.info('         Package: %s' % pack)
             package_section += (" -p " + pack)
+
+        main_device = self.current_device()
 
         seed_section = " -s " + seed
         delay_section = " --throttle " + delay_num
@@ -286,7 +312,7 @@ class MainFrame(wx.Frame):
         os.chdir(self.log_dir)
 
         # run monkey and record monkey log ################
-        monkey_cmd = "adb shell monkey"
+        monkey_cmd = "adb -s %s shell monkey" % main_device
         monkey_cmd = monkey_cmd + delay_section + seed_section + package_section + hard_key_section\
                      + system_key_section + activity_p_section + log_section + execute_mode_section
         monkey_cmd = monkey_cmd + " " + execute_num + " > monkey.log"
@@ -316,23 +342,22 @@ class MainFrame(wx.Frame):
 
     def stop_logcat(self, event):
         if check_devices():
-            self.logcat_p = commands.getoutput('adb shell ps | grep logcat')
+            self.logcat_p = commands.getoutput('adb -s %s shell ps | grep logcat' % self.current_device())
             if self.logcat_p != "":
                 for i in self.logcat_p.strip().split('\r'):
-                    pid = i.split(' ')[5]
+                    pid = i.split(' ')[6]
                     log.info('Logcat pid = ' + pid)
-                    commands.getoutput('adb shell kill %s' % pid)
+                    commands.getoutput('adb -s %s shell kill %s' % (self.current_device(), pid))
             else:
                 log.info('No logcat process running!')
 
-    @staticmethod
-    def clear_logcat():
-        cmd = 'adb logcat -c'
+    def clear_logcat(self):
+        cmd = 'adb -s %s logcat -c' % self.current_device()
         commands.getstatusoutput(cmd)
 
     def save_log(self):
         self.clear_logcat()
-        cmd = 'adb logcat -v time > logcat.txt'
+        cmd = 'adb -s %s logcat -v time > logcat.txt' % self.current_device()
         commands.getstatusoutput(cmd)
 
     def build_fatal_log(self, event):
@@ -341,9 +366,9 @@ class MainFrame(wx.Frame):
 
     def check_monkey(self, event):
         if check_devices():
-            self.monkey_p = commands.getoutput('adb shell ps | grep monkey')
+            self.monkey_p = commands.getoutput('adb -s %s shell ps | grep monkey' % self.current_device())
             if self.monkey_p != "":
-                pid = self.monkey_p.split(' ')[5]
+                pid = self.monkey_p.split(' ')[6]
                 log.info('Monkey pid = ' + pid)
                 return True, pid
             else:
@@ -354,7 +379,7 @@ class MainFrame(wx.Frame):
         monkey_event = self.check_monkey(event)
         if monkey_event:
             pid = monkey_event[1]
-            commands.getoutput('adb shell kill %s' % pid)
+            commands.getoutput('adb -s %s shell kill %s' % (self.current_device(), pid))
             self.stop_logcat(event)
         self.quickButton.Enable()
         self.doButton.Enable()
@@ -362,7 +387,7 @@ class MainFrame(wx.Frame):
 
     def capture_task(self):
         try:
-            self.start_new_thread(take_screen_shot('Capture_'+str(time.time())))
+            self.start_new_thread(take_screen_shot('Capture_' + str(time.time())))
         except MyException, e:
             img_path = e.message
             if img_path:

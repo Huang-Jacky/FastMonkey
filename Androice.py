@@ -30,7 +30,7 @@ def check_devices():
         for info in result:
             if info: log.info('    ' + info)
         log.info('More than one device/emulator, please check!')
-        return False
+        return True
 
 
 def get_ctime(*timestamp):
