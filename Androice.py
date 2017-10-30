@@ -17,9 +17,7 @@ def check_devices():
         log.warn('There is no device connected currently, please check!')
         return False
     elif len(result) <= 3:
-        phone_name = cmd[1].split('\n')[1].split('\t')[0]
         phone_status = cmd[1].split('\n')[1].split('\t')[1]
-        log.info('Connected phone: ' + phone_name)
         if phone_status != 'device':
             log.warn('Phone status is {' + phone_status + '}, connection is limited!')
             log.warn('Please replug the cable and confirm the notice of the phone!')
@@ -29,7 +27,7 @@ def check_devices():
     else:
         for info in result:
             if info: log.info('    ' + info)
-        log.info('More than one device/emulator, please check!')
+        log.warn('More than one device/emulator, please check!')
         return True
 
 
