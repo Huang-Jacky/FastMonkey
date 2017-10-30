@@ -73,9 +73,10 @@ class MainFrame(wx.Frame):
         self.executeModeCtrl = wx.ComboBox(panel, -1, "", (x_pos1, y_pos + 3 * y_delta), choices=execute_mode,
                                            style=wx.CB_READONLY)
 
-        wx.StaticText(panel, -1, "选择设备:", pos=(x_pos, y_pos + 4 * y_delta))
+        self.getButton = wx.Button(panel, -1, "选择设备", pos=(x_pos, y_pos + 4 * y_delta))
+        self.Bind(wx.EVT_BUTTON, self.get_connect_devices, self.getButton)
+
         list_box = self.get_devices()
-        list_box.append('Necux 5x - ahdhjhi3badbk')
         list_size = list_box.__len__()
         self.listBox = wx.ListBox(panel, -1, (x_pos1, y_pos + 4 * y_delta), (230, 21 * list_size), list_box, wx.LB_SINGLE)
         if list_size > 0:
@@ -130,6 +131,13 @@ class MainFrame(wx.Frame):
                     device_type = commands.getoutput(cmd).strip()
                     devices_list.append(' - '.join([device_type, phone_name]))
         return devices_list
+
+    def get_connect_devices(self, event):
+        self.listBox.Clear()
+        d_list = self.get_devices()
+        self.listBox.SetItems(d_list)
+        if d_list.__len__() > 0:
+            self.listBox.SetSelection(0)
 
     def current_device(self):
         return self.listBox.GetStringSelection().split(' - ')[1]
@@ -345,7 +353,7 @@ class MainFrame(wx.Frame):
             self.logcat_p = commands.getoutput('adb -s %s shell ps | grep logcat' % self.current_device())
             if self.logcat_p != "":
                 for i in self.logcat_p.strip().split('\r'):
-                    pid = i.split(' ')[6]
+                    pid = self.remove_item(i.split(' '), '')
                     log.info('Logcat pid = ' + pid)
                     commands.getoutput('adb -s %s shell kill %s' % (self.current_device(), pid))
             else:
@@ -368,12 +376,28 @@ class MainFrame(wx.Frame):
         if check_devices():
             self.monkey_p = commands.getoutput('adb -s %s shell ps | grep monkey' % self.current_device())
             if self.monkey_p != "":
-                pid = self.monkey_p.split(' ')[6]
+                pid = self.remove_item(self.monkey_p.split(' '), '')[1]
                 log.info('Monkey pid = ' + pid)
                 return True, pid
             else:
                 log.info('No monkey process running!')
                 return False
+
+    @staticmethod
+    def remove_item(iter_obj, item):
+        tmp = iter_obj
+        if isinstance(iter_obj, str):
+            tmp = iter_obj.replace(item, '')
+        elif hasattr(iter_obj, '__iter__'):
+            while item in iter_obj:
+                if isinstance(iter_obj, dict):
+                    del iter_obj[item]
+                elif isinstance(iter_obj, list):
+                    iter_obj.remove(item)
+                elif isinstance(iter_obj, tuple):
+                    break
+                tmp = iter_obj
+        return tmp
 
     def stop_monkey(self, event):
         monkey_event = self.check_monkey(event)
