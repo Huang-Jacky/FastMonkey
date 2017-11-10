@@ -6,7 +6,7 @@ import logger
 import os
 import time
 
-log = logger.Log('./my_log.log', 'INFO', os.path.split(__file__)[1])
+log = logger.Log('INFO', os.path.split(__file__)[1])
 screen_shot_path = os.path.join(os.getcwd(), 'screenshot')
 
 
@@ -27,12 +27,11 @@ def check_devices():
     else:
         for info in result:
             if info: log.info('    ' + info)
-        log.warn('More than one device/emulator, please check!')
+        log.warn('More than one device/emulator!')
         return True
 
 
 def get_ctime(*timestamp):
-    import time
     if timestamp:
         t = time.strftime("%Y-%m-%d %H:%M:%S ", time.localtime(timestamp[0]/1000))
     else:
@@ -40,16 +39,18 @@ def get_ctime(*timestamp):
     return t
 
 
-def take_screen_shot(file_name='Capture_'+str(time.time()), save_path=screen_shot_path):
+def take_screen_shot(device=None, file_name='Capture_'+str(time.time()), save_path=screen_shot_path):
     if check_devices():
-        cmd = commands.getstatusoutput('adb shell /system/bin/screencap -p /sdcard/%s.png' % file_name)
+        if device:
+            device = '-s ' + device
+        cmd = commands.getstatusoutput('adb %s shell /system/bin/screencap -p /sdcard/%s.png' % (device, file_name))
         if cmd[0] == 0:
             if not os.path.exists(save_path):
                 os.mkdir(save_path)
-            commands.getstatusoutput('adb pull /sdcard/%s.png %s' % (file_name, save_path))
+            commands.getstatusoutput('adb %s pull /sdcard/%s.png %s' % (device, file_name, save_path))
             if os.path.exists(save_path + '/' + file_name + '.png'):
                 log.info('Take screen shot done! Saved at %s.png' % (save_path + '/' + file_name))
-                commands.getstatusoutput('adb shell rm /sdcard/%s.png' % file_name)
+                commands.getstatusoutput('adb %s shell rm /sdcard/%s.png' %(device, file_name))
             else:
                 log.warn('Save screen shot failed!')
         else:

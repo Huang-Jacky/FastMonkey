@@ -10,7 +10,8 @@ import thread
 import logger
 from PIL import Image
 
-log = logger.Log('./my_log.log', 'INFO', os.path.split(__file__)[1])
+# log = logger.Log('./my_log.log', 'INFO', os.path.split(__file__)[1])
+log = logger.Log('INFO', os.path.split(__file__)[1])
 
 
 class MainFrame(wx.Frame):
@@ -22,6 +23,7 @@ class MainFrame(wx.Frame):
     default_package = ['com.mobvista.sdk.demo']
     monkey_p = ""
     logcat_p = ""
+    current_phone = ''
 
     def __init__(self):
         wx.Frame.__init__(self, None, -1, "FastMonkey", pos=(480, 25), size=(420, 750),
@@ -73,12 +75,12 @@ class MainFrame(wx.Frame):
         self.executeModeCtrl = wx.ComboBox(panel, -1, "", (x_pos1, y_pos + 3 * y_delta), choices=execute_mode,
                                            style=wx.CB_READONLY)
 
-        self.getButton = wx.Button(panel, -1, "选择设备", pos=(x_pos, y_pos + 4 * y_delta))
+        self.getButton = wx.Button(panel, -1, "获取设备", pos=(x_pos, y_pos + 4 * y_delta))
         self.Bind(wx.EVT_BUTTON, self.get_connect_devices, self.getButton)
 
         list_box = self.get_devices()
         list_size = list_box.__len__()
-        self.listBox = wx.ListBox(panel, -1, (x_pos1, y_pos + 4 * y_delta), (230, 21 * list_size), list_box, wx.LB_SINGLE)
+        self.listBox = wx.ListBox(panel, -1, (x_pos1, y_pos + 4 * y_delta), (280, 21 * list_size), list_box, wx.LB_SINGLE)
         if list_size > 0:
             self.listBox.SetSelection(0)
 
@@ -187,12 +189,14 @@ class MainFrame(wx.Frame):
     def quick_monkey(self):
         self.quickButton.Disable()
         self.doButton.Disable()
+        self.listBox.Disable()
         self.reset()
         self.start_cmd()
 
     def normal_monkey(self):
         self.quickButton.Disable()
         self.doButton.Disable()
+        self.listBox.Disable()
         self.start_cmd()
 
     @staticmethod
@@ -353,7 +357,7 @@ class MainFrame(wx.Frame):
             self.logcat_p = commands.getoutput('adb -s %s shell ps | grep logcat' % self.current_device())
             if self.logcat_p != "":
                 for i in self.logcat_p.strip().split('\r'):
-                    pid = self.remove_item(i.split(' '), '')
+                    pid = self.remove_item(i.split(' '), '')[1]
                     log.info('Logcat pid = ' + pid)
                     commands.getoutput('adb -s %s shell kill %s' % (self.current_device(), pid))
             else:
@@ -407,11 +411,12 @@ class MainFrame(wx.Frame):
             self.stop_logcat(event)
         self.quickButton.Enable()
         self.doButton.Enable()
+        self.listBox.Enable()
         os.chdir(self.root_dir)
 
     def capture_task(self):
         try:
-            self.start_new_thread(take_screen_shot('Capture_' + str(time.time())))
+            self.start_new_thread(take_screen_shot(device=self.current_device(), file_name='Capture_'+str(time.time())))
         except MyException, e:
             img_path = e.message
             if img_path:
