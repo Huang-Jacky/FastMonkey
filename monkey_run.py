@@ -80,6 +80,8 @@ class MainFrame(wx.Frame):
 
         list_box = self.get_devices()
         list_size = list_box.__len__()
+        if list_size > 2:
+            list_size = 2
         self.listBox = wx.ListBox(panel, -1, (x_pos1, y_pos + 4 * y_delta), (280, 21 * list_size), list_box, wx.LB_SINGLE)
         if list_size > 0:
             self.listBox.SetSelection(0)
@@ -231,14 +233,15 @@ class MainFrame(wx.Frame):
 
     def get_package_list(self, event):
         self.checkListBox.Clear()
-        cmd = "adb -s %s shell ls data/data" % self.current_device()
+        cmd = "adb -s %s shell pm list packages" % self.current_device()
         result = commands.getoutput(cmd).split('\r')
         while '' in result:
             result.remove('')
         if len(result) > 1:
             for item in result:
                 if item != "":
-                    self.checkListBox.Append(item.strip())
+                    pkg = item.split(':')[1]
+                    self.checkListBox.Append(pkg.strip())
                 else:
                     self.checkListBox.Append(self.default_package)
         elif len(result) == 1:
@@ -246,8 +249,7 @@ class MainFrame(wx.Frame):
                 log.warn('Need ROOT Permission to access!')
                 self.checkListBox.Append(self.default_package)
             else:
-                log.info(result[0])
-                self.checkListBox.Append(result[0].strip())
+                self.checkListBox.Append(result[0].split(':')[1].strip())
 
     def reset(self):
         self.seedCtrl.SetValue(self.seedDefault)
@@ -334,6 +336,7 @@ class MainFrame(wx.Frame):
         os.chdir(self.root_dir)
         self.quickButton.Enable()
         self.doButton.Enable()
+        self.listBox.Enable()
 
     @staticmethod
     def build_log(path):

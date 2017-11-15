@@ -50,7 +50,7 @@ def take_screen_shot(device=None, file_name='Capture_'+str(time.time()), save_pa
             commands.getstatusoutput('adb %s pull /sdcard/%s.png %s' % (device, file_name, save_path))
             if os.path.exists(save_path + '/' + file_name + '.png'):
                 log.info('Take screen shot done! Saved at %s.png' % (save_path + '/' + file_name))
-                commands.getstatusoutput('adb %s shell rm /sdcard/%s.png' %(device, file_name))
+                commands.getstatusoutput('adb %s shell rm /sdcard/%s.png' % (device, file_name))
             else:
                 log.warn('Save screen shot failed!')
         else:
