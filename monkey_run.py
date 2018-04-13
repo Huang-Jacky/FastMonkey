@@ -234,7 +234,7 @@ class MainFrame(wx.Frame):
     def get_package_list(self, event):
         self.checkListBox.Clear()
         cmd = "adb -s %s shell pm list packages" % self.current_device()
-        result = commands.getoutput(cmd).split('\r')
+        result = commands.getoutput(cmd).split('\n')
         while '' in result:
             result.remove('')
         if len(result) > 1:
@@ -282,6 +282,8 @@ class MainFrame(wx.Frame):
         delay_section = " --throttle " + delay_num
         log_section = ""
 
+        touch_section = ' --pct-touch 10'
+        motion_section = ' --pct-motion 10'
         hard_key_section = ' --pct-anyevent 0'
         system_key_section = ' --pct-syskeys 0'
         activity_p_section = ' --pct-appswitch 0'
@@ -327,8 +329,9 @@ class MainFrame(wx.Frame):
 
         # run monkey and record monkey log ################
         monkey_cmd = "adb -s %s shell monkey" % main_device
-        monkey_cmd = monkey_cmd + delay_section + seed_section + package_section + hard_key_section\
-                     + system_key_section + activity_p_section + log_section + execute_mode_section
+        monkey_cmd = monkey_cmd + delay_section + seed_section + package_section + touch_section\
+                     + motion_section + hard_key_section + system_key_section + activity_p_section + log_section\
+                     + execute_mode_section
         monkey_cmd = monkey_cmd + " " + execute_num + " > monkey.log"
         log.info(monkey_cmd)
         commands.getstatusoutput(monkey_cmd)
