@@ -8,6 +8,7 @@ import commands
 from Androice import check_devices, take_screen_shot, MyException
 import thread
 import logger
+import random
 from PIL import Image
 
 # log = logger.Log('./my_log.log', 'INFO', os.path.split(__file__)[1])
@@ -20,7 +21,7 @@ class MainFrame(wx.Frame):
     executeNumDefault = "60000000"
     log_dir = "./"
     root_dir = os.getcwd()
-    default_package = ['com.mobvista.sdk.demo']
+    default_package = ['com.mintegral.sdk.demo']
     monkey_p = ""
     logcat_p = ""
     current_phone = ''
@@ -32,6 +33,7 @@ class MainFrame(wx.Frame):
 
         x_pos = 10
         x_pos1 = 120
+        x_pos2 = 300
         y_pos = 12
         y_delta = 40
         execute_mode = ["默认",
@@ -62,6 +64,9 @@ class MainFrame(wx.Frame):
         self.seedCtrl = wx.TextCtrl(panel, -1, "", pos=(x_pos1, y_pos))
         self.seedCtrl.Bind(wx.EVT_KILL_FOCUS, self.valid_seed)
         self.seedCtrl.SetFocus()
+
+        self.checkBox = wx.CheckBox(panel, -1, "疲劳控制", pos=(x_pos2, y_pos))
+        self.Bind(wx.EVT_CHECKBOX, self.onChecked, self.checkBox)
 
         wx.StaticText(panel, -1, "执行次数:", pos=(x_pos, y_pos + y_delta))
         self.executeNumCtrl = wx.TextCtrl(panel, -1, "", pos=(x_pos1, y_pos + y_delta))
@@ -121,6 +126,38 @@ class MainFrame(wx.Frame):
     def on_quit(self, e):
         self.stop_monkey(e)
         self.Close()
+
+    def get_current_activity(self):
+        cmd = 'adb -s %s shell dumpsys activity activities | grep realActivity' % self.current_device()
+        activity = commands.getstatusoutput(cmd)[1].split('realActivity=')[1].strip()
+        return activity
+
+    def change_activity(self):
+        import random
+        while 1:
+            cmd = 'adb -s %s shell ps | grep monkey' % self.current_device()
+            monkey_alive = commands.getstatusoutput(cmd)
+            if monkey_alive[1]:
+                current_activity_befor = self.get_current_activity()
+                activity_list = ['HomeActivity', 'NativeActivity', 'InteractiveAdsActivity',
+                                 'NativeMultemplateActivity', 'AppwallActivity', 'RewardActivity', 'FeedsActivity',
+                                 'FeedsImageActivity', 'NativeInterstitialActivity', 'OfferWallActivity',
+                                 'InterstitialActivity', 'InterstitialVideoActivity']
+                time.sleep(300)
+                current_activity_after = self.get_current_activity()
+                if current_activity_after == current_activity_befor:
+                    use_activity = activity_list[random.randint(1, len(activity_list))]
+                    pkg_name = current_activity_after.split('/')[0]
+                    cmd = 'adb shell am start -n %s' % pkg_name + '/.' + use_activity
+                    commands.getstatusoutput(cmd)
+                    log.info("Current Activity: " + current_activity_befor + " chang to new activity: " +
+                             pkg_name + '/.' + use_activity)
+            else:
+                break
+
+    def onChecked(self, e):
+        if self.checkBox.IsChecked():
+            self.start_new_thread(self.change_activity)
 
     @staticmethod
     def get_devices():
@@ -189,6 +226,8 @@ class MainFrame(wx.Frame):
             self.delayNumCtrl.SetValue(self.delayDefault)
 
     def quick_monkey(self):
+        self.onChecked(True)
+        self.checkBox.Disable()
         self.quickButton.Disable()
         self.doButton.Disable()
         self.listBox.Disable()
@@ -196,6 +235,8 @@ class MainFrame(wx.Frame):
         self.start_cmd()
 
     def normal_monkey(self):
+        self.onChecked(True)
+        self.checkBox.Disable()
         self.quickButton.Disable()
         self.doButton.Disable()
         self.listBox.Disable()
@@ -283,7 +324,7 @@ class MainFrame(wx.Frame):
         log_section = ""
 
         touch_section = ' --pct-touch 10'
-        motion_section = ' --pct-motion 10'
+        motion_section = ' --pct-motion 0'
         hard_key_section = ' --pct-anyevent 0'
         system_key_section = ' --pct-syskeys 0'
         activity_p_section = ' --pct-appswitch 0'
@@ -418,6 +459,7 @@ class MainFrame(wx.Frame):
         self.quickButton.Enable()
         self.doButton.Enable()
         self.listBox.Enable()
+        self.checkBox.Enable()
         os.chdir(self.root_dir)
 
     def capture_task(self):
