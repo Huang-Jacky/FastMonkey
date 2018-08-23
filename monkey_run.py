@@ -128,8 +128,8 @@ class MainFrame(wx.Frame):
         self.Close()
 
     def get_current_activity(self):
-        cmd = 'adb -s %s shell dumpsys activity activities | grep realActivity' % self.current_device()
-        activity = commands.getstatusoutput(cmd)[1].split('realActivity=')[1].strip()
+        cmd = 'adb -s %s shell dumpsys activity | grep mFocusedActivity' % self.current_device()
+        activity = commands.getstatusoutput(cmd)[1].split('ActivityRecord')[1].split('/')[1].split(' ')[0]
         return activity
 
     def change_activity(self):
@@ -146,14 +146,12 @@ class MainFrame(wx.Frame):
                 time.sleep(300)
                 current_activity_after = self.get_current_activity()
                 if current_activity_after == current_activity_befor:
-                    use_activity = activity_list[random.randint(1, len(activity_list))]
-                    pkg_name = current_activity_after.split('/')[0]
+                    use_activity = activity_list[random.randint(0, len(activity_list) - 1)]
+                    pkg_name = 'com.mintegral.sdk.demo'
                     cmd = 'adb shell am start -n %s' % pkg_name + '/.' + use_activity
                     commands.getstatusoutput(cmd)
                     log.info("Current Activity: " + current_activity_befor + " chang to new activity: " +
                              pkg_name + '/.' + use_activity)
-            else:
-                break
 
     def onChecked(self, e):
         if self.checkBox.IsChecked():
