@@ -66,7 +66,7 @@ class MainFrame(wx.Frame):
         self.seedCtrl.SetFocus()
 
         self.checkBox = wx.CheckBox(panel, -1, "疲劳控制", pos=(x_pos2, y_pos))
-        self.Bind(wx.EVT_CHECKBOX, self.onChecked, self.checkBox)
+        self.Bind(wx.EVT_CHECKBOX, self.check_box, self.checkBox)
 
         wx.StaticText(panel, -1, "执行次数:", pos=(x_pos, y_pos + y_delta))
         self.executeNumCtrl = wx.TextCtrl(panel, -1, "", pos=(x_pos1, y_pos + y_delta))
@@ -152,6 +152,9 @@ class MainFrame(wx.Frame):
                     commands.getstatusoutput(cmd)
                     log.info("Current Activity: " + current_activity_befor + " chang to new activity: " +
                              pkg_name + '/.' + use_activity)
+
+    def check_box(self, e):
+        pass
 
     def onChecked(self, e):
         if self.checkBox.IsChecked():
