@@ -128,8 +128,9 @@ class MainFrame(wx.Frame):
         self.Close()
 
     def get_current_activity(self):
-        cmd = 'adb -s %s shell dumpsys activity | grep mFocusedActivity' % self.current_device()
-        activity = commands.getstatusoutput(cmd)[1].split('ActivityRecord')[1].split('/')[1].split(' ')[0]
+        cmd = 'adb -s %s shell dumpsys activity | grep -i realActivity' % self.current_device()
+        # activity = commands.getstatusoutput(cmd)[1].split('ActivityRecord')[1].split('/')[1].split(' ')[0]
+        activity = commands.getstatusoutput(cmd)[1].split('\n')[0].strip().split('=')[1]
         return activity
 
     def change_activity(self):
@@ -148,7 +149,7 @@ class MainFrame(wx.Frame):
                 if current_activity_after == current_activity_befor:
                     use_activity = activity_list[random.randint(0, len(activity_list) - 1)]
                     pkg_name = 'com.mintegral.sdk.demo'
-                    cmd = 'adb shell am start -n %s' % pkg_name + '/.' + use_activity
+                    cmd = 'adb -s %s shell am start -n %s' % (self.current_device(), pkg_name + '/.' + use_activity)
                     commands.getstatusoutput(cmd)
                     log.info("Current Activity: " + current_activity_befor + " chang to new activity: " +
                              pkg_name + '/.' + use_activity)
